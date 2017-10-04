@@ -19,4 +19,3 @@ plans:
       description: "You need to accept the Android Software Development Kit License agreement in order to continue."
       title: Android SDK License Agreement
       required: True
-

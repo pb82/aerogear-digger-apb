@@ -11,6 +11,15 @@
   tags:
   - deploy-sdk-pod
 
+- name: "Create Android Slave ConfigMap"
+  template:
+    src: android.configmap.yaml.j2
+    dest: /tmp/android.configmap.yaml
+    force: yes
+
+- name: Create OpenShift Jenkins Kubernetes Plugin ConfigMap
+  command: oc create -f /tmp/android.configmap.yaml
+
 - name: "Read Android SDK definition"
   set_fact:
     android_sdk_image_def: "{{ deployments | selectattr('name', 'match', '^android-sdk$') | map(attribute='containers') | list }}"
@@ -168,83 +177,3 @@
   when: gradlew_status.rc != 0
   tags:
   - install-sdk
-
-##############################################################################
-## An OpenShift Origin deployment configuration provides a replication
-## controller, spins up pods, and also provides the ability to transition from
-## one deployment of an image to a new one.
-## https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations
-##############################################################################
-#- name: create deployment config
-#  openshift_v1_deployment_config:
-#    name: buildfarm
-#    namespace: '{{ namespace }}'
-#    labels:
-#      app: buildfarm
-#      service: buildfarm
-#    replicas: 1
-#    selector:
-#      app: buildfarm
-#      service: buildfarm
-#    spec_template_metadata_labels:
-#      app: buildfarm
-#      service: buildfarm
-#    containers:
-#    - env:
-#      image: docker.io/ansibleplaybookbundle/hello-world:latest # replace with your application image
-#      name: buildfarm
-#      ports:
-#      - container_port: 8080
-#        protocol: TCP
-
-
-##############################################################################
-## A Kubernetes service serves as an internal load balancer.  It identifies a
-## set of replicated pods in order to proxy the connections it receives to them.
-## https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services
-##############################################################################
-#- name: create buildfarm service
-#  k8s_v1_service:
-#    name: buildfarm
-#    namespace: '{{ namespace }}'
-#    labels:
-#      app: buildfarm
-#      service: buildfarm
-#    selector:
-#      app: buildfarm
-#      service: buildfarm
-#    ports:
-#      - name: web
-#        port: 80
-#        target_port: 8080
-
-
-##############################################################################
-## An OpenShift Origin route exposes a service at a host name, so that external
-## clients can reach it by name. Each route consists of a name, a service
-## selector, and an optional security configuration.
-## https://docs.openshift.org/latest/architecture/core_concepts/routes.html
-##############################################################################
-#- name: create buildfarm route
-#  openshift_v1_route:
-#    name: buildfarm
-#    namespace: '{{ namespace }}'
-#    labels:
-#      app: buildfarm
-#      service: buildfarm
-#    to_name: buildfarm
-#    spec_port_target_port: web
-
-
-
-##############################################################################
-## Bindable services must make credentials available to the Ansible Service
-## Broker during the provision stage.  They will later be made available to
-## applications after a binding is created.
-## https://github.com/kubernetes-incubator/service-catalog/blob/master/docs/design.md#using-a-service-instance
-##############################################################################
-#- name: encode bind credentials
-#  asb_encode_binding:
-#    fields:
-#      ENV_VAR_1: value1
-#      ENV_VAR_2: value2

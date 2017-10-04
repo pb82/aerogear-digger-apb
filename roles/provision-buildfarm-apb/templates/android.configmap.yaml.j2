@@ -1,0 +1,47 @@
+apiVersion: v1
+data:
+  android: |-
+    <org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+      <inheritFrom></inheritFrom>
+      <name>android</name>
+      <instanceCap>{{ android_slave_instance_cap }}</instanceCap>
+      <idleMinutes>{{ android_slave_idle_minutes }}</idleMinutes>
+      <nodeUsageMode>NORMAL</nodeUsageMode>
+      <slaveConnectTimeout>100</slaveConnectTimeout>
+      <label>android</label>
+      <serviceAccount>jenkins</serviceAccount>
+      <nodeSelector>android</nodeSelector>
+      <privileged>false</privileged>
+      <volumes>
+        <org.csanchez.jenkins.plugins.kubernetes.volumes.PersistentVolumeClaim>
+          <mountPath>/opt/android-sdk-linux</mountPath>
+          <claimName>android-sdk</claimName>
+          <readOnly>true</readOnly>
+        </org.csanchez.jenkins.plugins.kubernetes.volumes.PersistentVolumeClaim>
+      </volumes>
+      <containers>
+        <org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+          <name>jnlp</name>
+          <image>{{ android_slave_image }}</image>
+          <privileged>false</privileged>
+          <alwaysPullImage>true</alwaysPullImage>
+          <workingDir>/tmp</workingDir>
+          <command></command>
+          <args>${computer.jnlpmac} ${computer.name}</args>
+          <ttyEnabled>true</ttyEnabled>
+          <resourceRequestCpu></resourceRequestCpu>
+          <resourceRequestMemory></resourceRequestMemory>
+          <resourceLimitCpu></resourceLimitCpu>
+          <resourceLimitMemory></resourceLimitMemory>
+        </org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+      </containers>
+      <envVars/>
+      <annotations/>
+      <imagePullSecrets/>
+      <nodeProperties/>
+    </org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+kind: ConfigMap
+metadata:
+  labels:
+    role: jenkins-slave
+  name: android
