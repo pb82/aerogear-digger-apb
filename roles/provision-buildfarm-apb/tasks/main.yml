@@ -1,0 +1,250 @@
+##############################################################################
+## Provision buildfarm
+## This role executes much of the needed functionality to provision an
+## application using an Ansible Playbook Bundle.  Included in the comments
+## below are some sample resources for getting started deploying an application
+## to OpenShift.
+##############################################################################
+
+- name: "Include variables"
+  include_vars: vars/main.yml
+  tags:
+  - deploy-sdk-pod
+
+- name: "Read Android SDK definition"
+  set_fact:
+    android_sdk_image_def: "{{ deployments | selectattr('name', 'match', '^android-sdk$') | map(attribute='containers') | list }}"
+  tags:
+  - deploy-sdk-pod
+
+- name: "Get image version"
+  set_fact:
+    android_sdk_image: "{{ android_sdk_image_def[0][0].image }}"
+  tags:
+  - deploy-sdk-pod
+
+- name: "Update local android-sdk-persistent template with image version and tag"
+  template:
+    src: android-sdk-persistent-template.j2
+    dest: "{{ buildfarm_templates_dir }}/android-sdk-persistent-template.json"
+  tags:
+  - deploy-sdk-pod
+
+- name: "Deploy the Android SDK image"
+  command: "oc new-app -f {{ buildfarm_templates_dir }}/android-sdk-persistent-template.json"
+  register: android_create_result
+  failed_when:
+    - android_create_result.stderr and android_create_result.stderr != '' and 'already exists' not in android_create_result.stderr
+  changed_when: android_create_result.rc == 0 or (android_create_result.rc == 1 and 'created' in android_create_result.stdout)
+  tags:
+  - deploy-sdk-pod
+
+- name: "Pausing for Pods to create"
+  pause: seconds=10
+  when: android_create_result|changed
+  tags:
+  - deploy-sdk-pod
+
+- name: Determine what polling logic to use
+  local_action: stat path=../playbooks/tasks/poller.yml
+  register: poller
+
+- block:
+  - name: "Poll for Pods to become ready"
+    command: oc get dc android-sdk --output jsonpath='{.status.availableReplicas}'
+    register: poll_result
+    until: poll_result.rc == 0 and poll_result.stdout | int > 0
+    retries: 60
+    delay: 10
+    tags:
+    - deploy-sdk-pod
+  rescue:
+  - name: "Attempting redeploy of failed Pod"
+    command: oc deploy --retry dc/android-sdk
+  when: not poller.stat.exists
+
+- name: "Get the Android SDK pod name"
+  shell: "oc get pods| grep android-sdk | grep -v deploy | awk '{print$1}'"
+  failed_when: output.stdout == ""
+  register: output
+  changed_when: False
+  tags:
+  - install-sdk
+
+- name: "Register android-sdk pod name"
+  set_fact:
+    android_sdk_podname: "{{ output.stdout }}"
+  tags:
+  - install-sdk
+
+- name: "Set random filename"
+  set_fact:
+    config_file: "sample{{ 10000 | random }}.cfg"
+  tags:
+  - install-sdk
+
+- debug:
+    msg: "Filename set to {{ config_file }}"
+  tags:
+  - install-sdk
+
+- name: "Template out configuaration file"
+  template:
+    src: sample_cfg.j2
+    dest: /tmp/{{ config_file }}
+    force: yes
+  vars:
+    components: "{{ android_sdk_components }}"
+    keystore: "{{ android_debug_keystore }}"
+  tags:
+    - install-sdk
+
+- name: "Copy the Android SDK config file to the container"
+  shell: "oc exec -i {{ android_sdk_podname }} -- bash -c 'cat > /opt/tools/{{ config_file }}' < /tmp/{{ config_file }}"
+  tags:
+    - install-sdk
+
+- name: "Set permission on the file"
+  shell: "oc exec -i {{ android_sdk_podname }} -- bash -c 'chmod 775 /opt/tools/{{ config_file }}'"
+  tags:
+  - install-sdk
+
+- name: "Checks if android sdk folder already exists"
+  stat:
+    path: "{{ android_sdk_home }}"
+  register: sdk_folder
+  tags:
+  - install-sdk
+
+- name: "Install the Android SDK"
+  command: "oc rsh {{ android_sdk_podname }} androidctl sdk install"
+  when: sdk_folder.stat.exists == False
+  tags:
+  - install-sdk
+
+- name: "Sync Android Platform Versions via config"
+  command: "oc rsh {{ android_sdk_podname }} androidctl-sync /opt/tools/{{ config_file }}"
+  register: rsh_cmd
+  failed_when: "'Traceback' in rsh_cmd.stdout or 'Common Arguments' in rsh_cmd.stdout"
+  tags:
+  - install-sdk
+
+- name: "Installing Android SDK, this may take some time"
+  command: "oc rsh {{ android_sdk_podname }} androidctl-sync -y /opt/tools/{{ config_file }}"
+  when: "'Accept?' in rsh_cmd.stdout"
+  tags:
+  - install-sdk
+
+- name: "Check gradle wrapper exists"
+  command: oc exec {{ android_sdk_podname }} -i -- bash -c 'stat {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradlew'
+  register: gradlew_status
+  failed_when: False
+  changed_when: False
+  tags:
+  - install-sdk
+
+-
+  block:
+  - name: "Create required directory"
+    command: oc exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'
+
+  - name: "Create temp folder"
+    file:
+      path: /tmp/digger-installer
+      state: directory
+      mode: 0777
+
+  - name: "Copy gradlew to remote temp folder"
+    copy:
+      src: gradle-wrapper.tar.gz
+      dest: /tmp/digger-installer/gradle-wrapper.tar.gz
+      mode: 0777
+
+  - name: "Copy required tarball"
+    command: oc rsync /tmp/digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'
+
+  - name: "Unarchive gradle files"
+    command: oc exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'
+  when: gradlew_status.rc != 0
+  tags:
+  - install-sdk
+
+##############################################################################
+## An OpenShift Origin deployment configuration provides a replication
+## controller, spins up pods, and also provides the ability to transition from
+## one deployment of an image to a new one.
+## https://docs.openshift.org/latest/architecture/core_concepts/deployments.html#deployments-and-deployment-configurations
+##############################################################################
+#- name: create deployment config
+#  openshift_v1_deployment_config:
+#    name: buildfarm
+#    namespace: '{{ namespace }}'
+#    labels:
+#      app: buildfarm
+#      service: buildfarm
+#    replicas: 1
+#    selector:
+#      app: buildfarm
+#      service: buildfarm
+#    spec_template_metadata_labels:
+#      app: buildfarm
+#      service: buildfarm
+#    containers:
+#    - env:
+#      image: docker.io/ansibleplaybookbundle/hello-world:latest # replace with your application image
+#      name: buildfarm
+#      ports:
+#      - container_port: 8080
+#        protocol: TCP
+
+
+##############################################################################
+## A Kubernetes service serves as an internal load balancer.  It identifies a
+## set of replicated pods in order to proxy the connections it receives to them.
+## https://docs.openshift.org/latest/architecture/core_concepts/pods_and_services.html#services
+##############################################################################
+#- name: create buildfarm service
+#  k8s_v1_service:
+#    name: buildfarm
+#    namespace: '{{ namespace }}'
+#    labels:
+#      app: buildfarm
+#      service: buildfarm
+#    selector:
+#      app: buildfarm
+#      service: buildfarm
+#    ports:
+#      - name: web
+#        port: 80
+#        target_port: 8080
+
+
+##############################################################################
+## An OpenShift Origin route exposes a service at a host name, so that external
+## clients can reach it by name. Each route consists of a name, a service
+## selector, and an optional security configuration.
+## https://docs.openshift.org/latest/architecture/core_concepts/routes.html
+##############################################################################
+#- name: create buildfarm route
+#  openshift_v1_route:
+#    name: buildfarm
+#    namespace: '{{ namespace }}'
+#    labels:
+#      app: buildfarm
+#      service: buildfarm
+#    to_name: buildfarm
+#    spec_port_target_port: web
+
+
+
+##############################################################################
+## Bindable services must make credentials available to the Ansible Service
+## Broker during the provision stage.  They will later be made available to
+## applications after a binding is created.
+## https://github.com/kubernetes-incubator/service-catalog/blob/master/docs/design.md#using-a-service-instance
+##############################################################################
+#- name: encode bind credentials
+#  asb_encode_binding:
+#    fields:
+#      ENV_VAR_1: value1
+#      ENV_VAR_2: value2

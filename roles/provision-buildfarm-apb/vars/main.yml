@@ -1,0 +1,74 @@
+---
+# vars file for android-sdk
+# configurations for the Android SDK installation
+android_sdk_components:
+  base:
+    - tools
+    - platform-tools
+  platforms:
+    - android-26
+    - android-25
+    - android-24
+    - android-23
+    - android-22
+  build-tools:
+    - 26.0.1
+    - 26.0.0
+    - 25.0.3
+    - 25.0.2
+    - 25.0.1
+    - 25.0.0
+    - 24.0.3
+    - 23.0.3
+    - 23.0.2
+    - 23.0.1
+    - 23.0.0
+    - 22.0.1
+    - 22.0.0
+  "extras:google":
+    - google_play_services
+    - m2repository
+  "extras:android":
+    - m2repository
+  "extras:m2repository:com:android:support:constraint:constraint-layout":
+    - 1.0.0
+    - 1.0.1
+    - 1.0.2
+  "extras:m2repository:com:android:support:constraint:constraint-layout-solver":
+    - 1.0.0
+    - 1.0.2
+
+# configurations for the default Android debug keystore
+android_debug_keystore:
+  name: AG
+  unit: AeroGear
+  org: RedHat
+  loc: Waterford
+  state: WD
+  country: IRL
+
+# The following fields are used by Ansible and you don't need to change them.
+pause_for: 0
+retry_limit: 20
+interval: 30
+buildfarm_templates_dir: /tmp
+# Do not modify
+strict_mode: true
+buildfarm:
+   pause_for: 20
+# default images for the Android slave containers. You don't need to change them.
+deployments:
+  - name: "android-slave"
+    containers:
+    - name: "android-slave"
+      image: "docker.io/aerogear/digger-android-slave-image:latest"
+  - name: "android-sdk"
+    containers:
+    - name: "android-sdk"
+      image: "docker.io/aerogear/digger-android-sdk-image:latest"
+  - name: "nagios"
+    containers:
+    - name: "nagios"
+      image: "docker.io/aerogear/digger-nagios:dev"
+# max number of concurrent Android builds that are allowed
+concurrent_android_builds: 5
