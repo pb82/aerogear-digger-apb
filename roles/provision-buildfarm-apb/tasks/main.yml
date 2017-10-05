@@ -11,6 +11,32 @@
   tags:
   - deploy-sdk-pod
 
+- name: Check for current Jenkins
+  command: oc get service jenkins
+  failed_when: false
+  changed_when: false
+  register: jenkins_check
+
+- name: Ensure Jenkins exists in namespace
+  command: oc new-app --template=jenkins-persistent
+  when: jenkins_check.rc != 0
+
+- name: Copy Jenkins plugin install script to host
+  copy:
+    src: install-jenkins-plugins.sh
+    dest: /tmp/install-jenkins-plugins.sh
+    force: yes
+
+- name: Copy Jenkins plugin binaries to host
+  copy:
+    src: plugins/
+    dest: /tmp/jenkins-plugins/
+    force: yes
+
+- name: Install Jenkins plugins
+  shell: bash /tmp/install-jenkins-plugins.sh
+  register: install_jenkins_plugins
+
 - name: "Create Android Slave ConfigMap"
   template:
     src: android.configmap.yaml.j2
