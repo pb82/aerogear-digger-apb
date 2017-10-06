@@ -9,7 +9,7 @@ metadata:
   console.openshift.io/iconClass: font-icon icon-jenkins
 plans:
   - name: default
-    description: Example description
+    description: Mobile focused CI CD service that integrates with Jenkins Pipelines to test and build your mobile binaries.
     free: True
     metadata: {}
     parameters:
