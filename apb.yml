@@ -5,6 +5,7 @@ bindable: False
 async: optional
 metadata:
   displayName: Mobile CI/CD
+  longDescription: "To use the Mobile CI/CD service you must first agree to the Android SDK License Agreement. By checking this box you are agreeing to the Android Software Development Kit License agreement which can be read at the following URL: https://developer.android.com/studio/terms.html\n\n. If the box is not checked the installer will take no action."
   console.openshift.io/iconClass: font-icon icon-jenkins
 plans:
   - name: default
@@ -15,7 +16,7 @@ plans:
     - name: ANDROID_LICENSE_AGREEMENT
       default: False
       type: boolean
-      description: "To use the Mobile CI/CD service you must first agree to the Android SDK License Agreement. By checking this box you are agreeing to the Android Software Development Kit License agreement which can be read at the following URL: https://developer.android.com/studio/terms.html. If the box is not checked the installer will take no action."
+      description: "You need to accept the Android Software Development Kit License agreement in order to continue."
       title: Android SDK License Agreement
       required: True
 
