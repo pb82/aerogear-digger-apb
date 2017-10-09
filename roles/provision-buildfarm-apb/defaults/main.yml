@@ -1,2 +1,5 @@
 ---
 android_sdk_home: /opt/android-sdk-linux
+android_slave_image: docker.io/aerogear/digger-android-slave-image
+android_slave_instance_cap: 3
+android_slave_idle_minutes: 3
