@@ -7,10 +7,12 @@
 * Creates the ConfigMap to configure the Jenkins Kubernetes Plugin
 
 ## Developing
-* Make your changes
-* `apb prepare` - Create the Dockerfile
-* `apb build` - Build the Dockerfile
-* `docker push ...` - Push the image to an image repository
+
+After making your required changes, update the apb.yml to point at your own docker organisation, run:
+
+```bash
+make DOCKERORG=<your docker org> DOCKERHOST=<defaulting to docker.io>
+```
 
 ## TODO
 * Creates an OpenShift Jenkins if it does not exist in a project
