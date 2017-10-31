@@ -241,18 +241,18 @@
 
   - name: "Create temp folder"
     file:
-      path: /tmp/digger-installer
+      path: /tmp/aerogear-digger-installer
       state: directory
       mode: 0777
 
   - name: "Copy gradlew to remote temp folder"
     copy:
       src: gradle-wrapper.tar.gz
-      dest: /tmp/digger-installer/gradle-wrapper.tar.gz
+      dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
       mode: 0777
 
   - name: "Copy required tarball"
-    command: oc rsync /tmp/digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'
+    command: oc rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'
 
   - name: "Unarchive gradle files"
     command: oc exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'
