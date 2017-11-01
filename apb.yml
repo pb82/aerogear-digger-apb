@@ -1,5 +1,5 @@
+version: 1.0
 name: aerogear-digger-apb
-image: feedhenry/aerogear-digger-apb
 description: Mobile CI/CD service that integrates with Jenkins Pipelines to test and build your mobile binaries.
 bindable: False
 async: optional
