@@ -1,15 +1,15 @@
 - name: delete AG-Digger resoures
-  command: oc delete {{ item }} android-sdk
+  command: "oc delete {{ item }} android-sdk -n {{ namespace }}"
   with_items:
     - dc
 
 - name: delete AG-Digger secret
-  command: oc delete {{ item }} aerogear-digger
+  command: "oc delete {{ item }} aerogear-digger -n {{ namespace }}"
   with_items:
     - secret
 
 - name: delete AG-Digger configmaps
-  command: oc delete configmap {{ item }}
+  command: "oc delete configmap {{ item }} -n {{ namespace }}"
   with_items:
     - android
     - android-proxy

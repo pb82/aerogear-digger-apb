@@ -58,17 +58,9 @@ buildfarm:
    pause_for: 20
 # default images for the Android slave containers. You don't need to change them.
 deployments:
-  - name: "android-slave"
-    containers:
-    - name: "android-slave"
-      image: "docker.io/aerogear/digger-android-slave-image:latest"
   - name: "android-sdk"
     containers:
     - name: "android-sdk"
-      image: "docker.io/aerogear/digger-android-sdk-image:latest"
-  - name: "nagios"
-    containers:
-    - name: "nagios"
-      image: "docker.io/aerogear/digger-nagios:dev"
+      image: "docker.io/aerogear/digger-android-sdk-image:FH-v3.19"
 # max number of concurrent Android builds that are allowed
 concurrent_android_builds: 5
