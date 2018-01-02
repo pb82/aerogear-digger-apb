@@ -1,5 +1,5 @@
 DOCKERHOST = docker.io
-DOCKERORG = feedhenry
+DOCKERORG = aerogearcatalog
 IMAGENAME = aerogear-digger-apb
 TAG = latest
 USER=$(shell id -u)
