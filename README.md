@@ -1,8 +1,8 @@
 # AeroGear Digger APB
 
-[![](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/feedhenry/aerogear-digger-apb/)
-[![Docker Stars](https://img.shields.io/docker/stars/feedhenry/aerogear-digger-apb.svg)](https://registry.hub.docker.com/v2/repositories/feedhenry/aerogear-digger-apb/stars/count/)
-[![Docker pulls](https://img.shields.io/docker/pulls/feedhenry/aerogear-digger-apb.svg)](https://registry.hub.docker.com/v2/repositories/feedhenry/aerogear-digger-apb/)
+[![](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/aerogearcatalog/aerogear-digger-apb/)
+[![Docker Stars](https://img.shields.io/docker/stars/aerogearcatalog/aerogear-digger-apb.svg)](https://registry.hub.docker.com/v2/repositories/aerogearcatalog/aerogear-digger-apb/stars/count/)
+[![Docker pulls](https://img.shields.io/docker/pulls/aerogearcatalog/aerogear-digger-apb.svg)](https://registry.hub.docker.com/v2/repositories/aerogearcatalog/aerogear-digger-apb/)
 [![License](https://img.shields.io/:license-Apache2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## What does it do?
