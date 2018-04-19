@@ -40,7 +40,7 @@
   register: jenkins_check
 
 - name: Ensure Jenkins exists in namespace
-  command: "oc new-app --template=jenkins-persistent -n {{ namespace }}"
+  command: "oc new-app --template=jenkins-persistent -e 'MEMORY_LIMIT={{ jenkins_master_memory_limit }}' -e 'VOLUME_CAPACITY={{ jenkins_master_volume_capacity }}' -n {{ namespace }}"
   when: jenkins_check.rc != 0
 
 - set_fact:

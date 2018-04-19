@@ -12,6 +12,7 @@ android_sdk_components:
     - android-23
     - android-22
   build-tools:
+    - 26.0.2
     - 26.0.1
     - 26.0.0
     - 25.0.3
@@ -61,6 +62,6 @@ deployments:
   - name: "android-sdk"
     containers:
     - name: "android-sdk"
-      image: "docker.io/aerogear/digger-android-sdk-image:FH-v3.19"
+      image: "docker.io/aerogear/digger-android-sdk-image:latest"
 # max number of concurrent Android builds that are allowed
 concurrent_android_builds: 5
