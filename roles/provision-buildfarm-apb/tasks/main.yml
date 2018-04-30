@@ -1,26 +1,4 @@
-##############################################################################
-## Provision buildfarm
-## This role executes much of the needed functionality to provision an
-## application using an Ansible Playbook Bundle.  Included in the comments
-## below are some sample resources for getting started deploying an application
-## to OpenShift.
-##############################################################################
-
-- name: "Include variables"
-  include_vars: vars/main.yml
-  tags:
-  - deploy-sdk-pod
-
-- name: Get the name of the service instance
-  shell: oc get serviceinstance --namespace={{ namespace }} -o jsonpath='{.items[?(@.spec.externalID=="{{ _apb_service_instance_id }}")].metadata.name}'
-  when: _apb_service_instance_id is defined
-  register: service_instance_name
-
-- name: Label the service instance with the service name
-  shell: oc label serviceinstance '{{ service_instance_name.stdout }}' serviceName=aerogear-digger --namespace={{ namespace }}
-  when: _apb_service_instance_id is defined
-
-- name: Create Mobile CI/CD secret file
+- name: Create Mobile CI|CD secret file
   template:
     src: aerogear-digger.secret.yaml.j2
     dest: /tmp/aerogear-digger.secret.yaml
@@ -30,11 +8,11 @@
     jenkinsUri: '""'
     jenkinsPreexists: "false"
 
-- name: Create Mobile CI/CD secret
+- name: Create Mobile CI|CD secret
   command: "oc create -f /tmp/aerogear-digger.secret.yaml -n {{ namespace }}"
 
 - name: Check for current Jenkins
-  command: "oc get service jenkins -n {{ namespace }}"
+  command: "oc get service {{ ag_jenkins.service.name }} -n {{ namespace }}"
   failed_when: false
   changed_when: false
   register: jenkins_check
@@ -44,26 +22,18 @@
   when: jenkins_check.rc != 0
 
 - set_fact:
-    jenkins_service_preexists: "true"
-  when: jenkins_check.rc == 0
-
-- set_fact:
-    jenkins_service_preexists: "false"
-  when: jenkins_check.rc != 0
+    jenkins_service_preexists: "{{ 'true' if jenkins_check.rc == 0 else 'false' }}"
 
 - name: Copy Jenkins plugin install script to host
   copy:
-    src: install-jenkins-plugins.sh
-    dest: /tmp/install-jenkins-plugins.sh
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
     force: yes
+  with_items:
+    - {src: install-jenkins-plugins.sh, dest: /tmp/install-jenkins-plugins.sh}
+    - {src: plugins/, dest: /tmp/jenkins-plugins/}
 
-- name: Copy Jenkins plugin binaries to host
-  copy:
-    src: plugins/
-    dest: /tmp/jenkins-plugins/
-    force: yes
-
-- include: update-secret.yml
+- include_tasks: update-secret.yml
   vars:
     status_message: Installing Jenkins plugins
     status_percentage: "20"
@@ -74,8 +44,8 @@
   shell: "bash /tmp/install-jenkins-plugins.sh {{ namespace }}"
   register: install_jenkins_plugins
 
-- name: Get Jenkins - Mobile CI/CD URI
-  shell: "oc get routes jenkins -n {{ namespace}}  | grep -v NAME | awk '{ print $2 }'"
+- name: Get Jenkins - Mobile CI|CD URI
+  shell: "oc get routes {{ ag_jenkins.route.name }} -n {{ namespace}}  | grep -v NAME | awk '{ print $2 }'"
   register: get_jenkins_uri
 
 - set_fact:
@@ -104,7 +74,7 @@
 
 - name: "Update local android-sdk-persistent template with image version and tag"
   template:
-    src: android-sdk-persistent-template.j2
+    src: android-sdk-persistent-template.json.j2
     dest: "{{ buildfarm_templates_dir }}/android-sdk-persistent-template.json"
   tags:
   - deploy-sdk-pod
@@ -128,7 +98,7 @@
   local_action: stat path=../playbooks/tasks/poller.yml
   register: poller
 
-- include: update-secret.yml
+- include_tasks: update-secret.yml
   vars:
     status_message: Creating Android SDK container
     status_percentage: "30"
@@ -137,7 +107,7 @@
 
 - block:
   - name: "Poll for Pods to become ready"
-    command: "oc get dc android-sdk --output jsonpath='{.status.availableReplicas}' -n {{ namespace }}"
+    command: "oc get dc/{{ ag_android_sdk.deployment.name }} --output jsonpath='{.status.availableReplicas}' -n {{ namespace }}"
     register: poll_result
     until: poll_result.rc == 0 and poll_result.stdout | int > 0
     retries: 60
@@ -146,18 +116,18 @@
     - deploy-sdk-pod
   rescue:
   - name: "Attempting redeploy of failed Pod"
-    command: "oc deploy --retry dc/android-sdk -n {{ namespace }}"
+    command: "oc deploy --retry dc/{{ ag_android_sdk.deployment.name }} -n {{ namespace }}"
   when: not poller.stat.exists
 
 - name: "Get the Android SDK pod name"
-  shell: "oc get pods -n {{ namespace }} | grep android-sdk | grep -v deploy | awk '{print$1}'"
+  shell: "oc get pods -n {{ namespace }} | grep {{ ag_android_sdk.deployment.name }} | grep -v deploy | awk '{print$1}'"
   failed_when: output.stdout == ""
   register: output
   changed_when: False
   tags:
   - install-sdk
 
-- name: "Register android-sdk pod name"
+- name: "Register {{ ag_android_sdk.deployment.name }} pod name"
   set_fact:
     android_sdk_podname: "{{ output.stdout }}"
   tags:
@@ -185,7 +155,7 @@
   tags:
     - install-sdk
 
-- include: update-secret.yml
+- include_tasks: update-secret.yml
   vars:
     status_message: Configuring Android SDK container
     status_percentage: "40"
@@ -228,7 +198,7 @@
   tags:
   - install-sdk
 
-- include: update-secret.yml
+- include_tasks: update-secret.yml
   vars:
     status_message: Configuring Gradle
     status_percentage: "80"
@@ -269,7 +239,7 @@
   tags:
   - install-sdk
 
-- include: update-secret.yml
+- include_tasks: update-secret.yml
   vars:
     status_message: Complete
     status_percentage: "100"

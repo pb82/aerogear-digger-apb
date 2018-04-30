@@ -1,0 +1,28 @@
+---
+ag_jenkins:
+  route:
+    name: 'jenkins'
+  service:
+    name: 'jenkins'
+    jnlp: 'jenkins-jnlp'
+  rolebinding:
+    name: 'jenkins_edit'
+  deployment:
+    name: 'jenkins'
+  pv_claim:
+    name: 'jenkins'
+
+ag_android_sdk:
+  service:
+    name: 'android-sdk'
+  rolebinding:
+    name: 'android-sdk_edit'
+  deployment:
+    name: 'android-sdk'
+  configmap:
+    name: 'android'
+    proxy: 'android-proxy'
+  pv_claim:
+    name: 'android-sdk'
+
+ag_digger_secret_name: 'aerogear-digger'

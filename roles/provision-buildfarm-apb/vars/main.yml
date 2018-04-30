@@ -59,7 +59,7 @@ buildfarm:
    pause_for: 20
 # default images for the Android slave containers. You don't need to change them.
 deployments:
-  - name: "android-sdk"
+  - name: "{{ ag_android_sdk.deployment.name }}"
     containers:
     - name: "android-sdk"
       image: "docker.io/aerogear/digger-android-sdk-image:latest"

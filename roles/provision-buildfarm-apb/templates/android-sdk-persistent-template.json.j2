@@ -54,7 +54,8 @@
           "metadata": {
             "creationTimestamp": null,
             "labels": {
-              "name": "${ANDROID_SDK_SERVICE_NAME}"
+              "name": "${ANDROID_SDK_SERVICE_NAME}",
+              "serviceInstanceID": "{{ _apb_service_instance_id }}"
             }
           },
           "spec": {
@@ -90,7 +91,7 @@
                   },
                   {
                     "name": "JAVA_HOME",
-                    "value": "${JVM_HOME}"
+                    "value": "${JAVA_SDK_HOME}"
                   },
                   {
                     "name": "HTTPS_PROXY",
@@ -133,7 +134,7 @@
                 "volumeMounts": [
                   {
                     "name": "${ANDROID_SDK_SERVICE_NAME}-data",
-                    "mountPath": "/opt/android-sdk-linux"
+                    "mountPath": "{{ android_sdk_home }}"
                   }
                 ],
                 "terminationMessagePath": "/dev/termination-log",
@@ -242,15 +243,15 @@
     },
     {
       "name": "ANDROID_SDK_HOME",
-      "displayName": "Androidd SDK home folder",
+      "displayName": "Android SDK home folder",
       "description": "Android SDK home folder",
-      "value": "/opt/android-sdk-linux"
+      "value": "{{ android_sdk_home }}"
     },
     {
-      "name": "JVM_HOME",
+      "name": "JAVA_SDK_HOME",
       "displayName": "Java HOME env var",
       "description": "Java HOME env var",
-      "value": "/etc/alternatives/java_sdk_1.8.0"
+      "value": "{{ java_sdk_home }}"
     },
     {
       "name": "ANDROID_SDK_IMAGE",
@@ -278,6 +279,7 @@
     }
   ],
   "labels": {
-    "template": "android-sdk-persistent-template"
+    "template": "android-sdk-persistent-template",
+    "serviceInstanceID": "{{ _apb_service_instance_id }}"
   }
 }

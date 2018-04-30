@@ -9,13 +9,13 @@ data:
       <nodeUsageMode>NORMAL</nodeUsageMode>
       <slaveConnectTimeout>100</slaveConnectTimeout>
       <label>android</label>
-      <serviceAccount>jenkins</serviceAccount>
+      <serviceAccount>{{ ag_jenkins.service.name }}</serviceAccount>
       <nodeSelector>android</nodeSelector>
       <privileged>false</privileged>
       <volumes>
         <org.csanchez.jenkins.plugins.kubernetes.volumes.PersistentVolumeClaim>
-          <mountPath>/opt/android-sdk-linux</mountPath>
-          <claimName>android-sdk</claimName>
+          <mountPath>{{ android_sdk_home }}</mountPath>
+          <claimName>{{ ag_android_sdk.pv_claim.name }}</claimName>
           <readOnly>true</readOnly>
         </org.csanchez.jenkins.plugins.kubernetes.volumes.PersistentVolumeClaim>
       </volumes>
@@ -44,4 +44,5 @@ kind: ConfigMap
 metadata:
   labels:
     role: jenkins-slave
+    serviceInstanceID: '{{ _apb_service_instance_id }}'
   name: android

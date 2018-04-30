@@ -1,15 +1,55 @@
-- name: delete AG-Digger resoures
-  command: "oc delete {{ item }} android-sdk -n {{ namespace }}"
+---
+- name: Delete AG-Jenkins route
+  openshift_v1_route:
+    name: '{{ item }}'
+    namespace: '{{ namespace }}'
+    state: absent
   with_items:
-    - dc
+  - '{{ ag_jenkins.route.name }}'
 
-- name: delete AG-Digger secret
-  command: "oc delete {{ item }} aerogear-digger -n {{ namespace }}"
+- name: Delete AG-Jenkins services
+  k8s_v1_service:
+    name: '{{ item }}'
+    namespace: '{{ namespace }}'
+    state: absent
   with_items:
-    - secret
+  - '{{ ag_jenkins.service.name }}'
+  - '{{ ag_jenkins.service.jnlp }}'
+
+- name: Delete AG-Digger Deployment Configs
+  command: "oc delete dc/{{ item }} -n {{ namespace }}"
+  with_items:
+  - '{{ ag_android_sdk.deployment.name }}'
+  - '{{ ag_jenkins.deployment.name }}'
+
+- name: Delete AG-Digger Service Accounts
+  command: "oc delete serviceaccounts/{{ item }} -n {{ namespace }}"
+  with_items:
+  - '{{ ag_android_sdk.service.name }}'
+  - '{{ ag_jenkins.service.name }}'
+
+- name: Delete AG-Digger Role Bindings
+  command: "oc delete rolebindings/{{ item }} -n {{ namespace }}"
+  with_items:
+  - '{{ ag_android_sdk.rolebinding.name }}'
+  - '{{ ag_jenkins.rolebinding.name }}'
+
+- name: Delete AG-Digger secrets
+  command: "oc delete secrets/{{ item }} -n {{ namespace }}"
+  with_items:
+  - '{{ ag_digger_secret_name }}'
 
 - name: delete AG-Digger configmaps
-  command: "oc delete configmap {{ item }} -n {{ namespace }}"
+  command: "oc delete configmaps/{{ item }} -n {{ namespace }}"
   with_items:
-    - android
-    - android-proxy
+  - '{{ ag_android_sdk.configmap.name }}'
+  - '{{ ag_android_sdk.configmap.proxy }}'
+
+- name: Delete AG-Digger PV claims
+  k8s_v1_persistent_volume_claim:
+    name: '{{ item }}'
+    namespace: '{{ namespace }}'
+    state: absent
+  with_items:
+  - '{{ ag_android_sdk.pv_claim.name }}'
+  - '{{ ag_jenkins.pv_claim.name }}'

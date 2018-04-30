@@ -1,13 +1,14 @@
 version: 1.0
 name: aerogear-digger-apb
-description: Mobile CI/CD service that integrates with Jenkins Pipelines to test and build your mobile binaries.
+description: Mobile CI|CD service that integrates with Jenkins Pipelines to test and build your mobile binaries.
 bindable: False
 async: optional
 tags:
   - mobile-service
+  - mobile-client-enabled
 metadata:
-  displayName: Mobile CI/CD
-  longDescription: "To use the Mobile CI/CD service you must first agree to the Android SDK License Agreement. By checking this box you are agreeing to the Android Software Development Kit License agreement which can be read at the following URL: https://developer.android.com/studio/terms.html\n\n. If the box is not checked the installer will take no action."
+  displayName: Mobile CI|CD
+  longDescription: "To use the Mobile CI|CD service you must first agree to the Android SDK License Agreement. By checking this box you are agreeing to the Android Software Development Kit License agreement which can be read at the following URL: https://developer.android.com/studio/terms.html\n\n. If the box is not checked the installer will take no action."
   serviceName: aerogear-digger
   imageUrl: "https://aerogear.org/img/aerogeardigger_icon_32px_cropped.png"
   documentationUrl: "https://aerogear.org/digger/"

@@ -1,7 +1,10 @@
 ---
-android_sdk_home: /opt/android-sdk-linux
+android_sdk_home: "{{ lookup('env', 'ANDROID_HOME')|default('/opt/android-sdk-linux', True) }}"
 android_slave_image: "docker.io/aerogear/digger-android-slave-image:latest"
 android_slave_instance_cap: 3
 android_slave_idle_minutes: 3
+
+java_sdk_home: "{{ lookup('env', 'JAVA_HOME')|default('/etc/alternatives/java_sdk_1.8.0', True) }}"
+
 jenkins_master_memory_limit: 3Gi
 jenkins_master_volume_capacity: 40Gi
