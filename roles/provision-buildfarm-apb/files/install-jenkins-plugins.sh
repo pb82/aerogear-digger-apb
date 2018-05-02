@@ -24,6 +24,8 @@ echo "Copying Jenkins plugins from /jenkins-plugins/"
 
 oc cp -n ${namespace} /tmp/jenkins-plugins/android-signing ${jenkins_pod}:/var/lib/jenkins/plugins/
 oc cp -n ${namespace} /tmp/jenkins-plugins/android-signing.jpi ${jenkins_pod}:/var/lib/jenkins/plugins/
+oc cp -n ${namespace} /tmp/jenkins-plugins/openshift-sync ${jenkins_pod}:/var/lib/jenkins/plugins/
+oc cp -n ${namespace} /tmp/jenkins-plugins/openshift-sync.hpi ${jenkins_pod}:/var/lib/jenkins/plugins/
 
 echo "Scaling down Jenkins"
 
