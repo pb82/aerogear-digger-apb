@@ -1,0 +1,93 @@
+---
+- name: "Get the Android SDK pod name"
+  shell: "oc get pods -n {{ namespace }} | grep android-sdk | grep -v deploy | awk '{print$1}'"
+  failed_when: output.stdout == ""
+  register: output
+  changed_when: False
+  tags:
+  - install-sdk
+
+- name: "Register android-sdk pod name"
+  set_fact:
+    android_sdk_podname: "{{ output.stdout }}"
+  tags:
+  - install-sdk
+
+
+- name: "Checks if android sdk is already installed"
+  stat:
+    path: "{{ android_sdk_home }}/tools/bin/sdkmanager"
+  register: sdk_folder
+
+- name: "Install the Android SDK"
+  command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sdk install"
+  when: sdk_folder.stat.exists == False
+
+-
+  name: Create custom config file
+  copy:
+    content: "{{ ANDROID_SDK_CONFIG }}"
+    dest: /tmp/sdk.cfg
+    mode: 0777
+
+-
+  name: Fix config file
+  command: sed -i 's/\\n/\n/g' /tmp/sdk.cfg
+
+-
+  name: Send config file to android sdk container
+  command: "oc cp /tmp/sdk.cfg {{ namespace }}/{{ android_sdk_podname }}:/opt/tools/sdk.cfg"
+
+-
+  name: Check android license
+  command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} stat {{ android_sdk_home }}/licenses/android-sdk-license"
+  register: android_license
+  failed_when: False
+
+-
+  name: Running package installation for the first time
+  block:
+    - name: "Sync Android Platform Versions via config"
+      command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync /opt/tools/sdk.cfg"
+      register: rsh_cmd
+      failed_when: "'Traceback' in rsh_cmd.stdout or 'Common Arguments' in rsh_cmd.stdout"
+
+    - name: "Installing Android SDK, this may take some time"
+      command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync -y /opt/tools/sdk.cfg"
+      when: "'Accept?' in rsh_cmd.stdout"
+  when: android_license.rc != 0
+
+- name: "Syncing Android SDK packages, this may take some time"
+  command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sync /opt/tools/sdk.cfg"
+  when: android_license.rc == 0
+
+- name: "Check gradle wrapper exists"
+  command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'stat {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradlew'"
+  register: gradlew_status
+  failed_when: False
+  changed_when: False
+
+-
+  block:
+    - name: "Create required directory"
+      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+
+    - name: "Create temp folder"
+      file:
+        path: /tmp/aerogear-digger-installer
+        state: directory
+        mode: 0777
+
+    - name: "Copy gradlew to remote temp folder"
+      copy:
+        src: gradle-wrapper.tar.gz
+        dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
+        mode: 0777
+
+    - name: "Copy required tarball"
+      command: "oc -n {{ namespace }} rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'"
+
+    - name: "Unarchive gradle files"
+      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+      when: gradlew_status.rc != 0
+  when: gradlew_status.rc != 0

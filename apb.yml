@@ -26,3 +26,21 @@ plans:
       description: "Type 'yes' above to accept the Android SDK License Agreement. https://developer.android.com/studio/terms.html"
       title: Android SDK License Agreement
       required: True
+      display_group: Android SDK
+    - name: ANDROID_SDK_AUTO_CONFIG
+      default: "Yes"
+      type: string
+      display_type: enum
+      enum: ["Yes", "No"]
+      description: "Installs the default android sdk packages"
+      title: Android SDK Auto Install
+      required: False
+      display_group: Android SDK
+    - name: ANDROID_SDK_CONFIG
+      type: string
+      display_type: textarea
+      description: "Android SDK config file content"
+      title: Android SDK config
+      required: False
+      updatable: True
+      display_group: Android SDK
