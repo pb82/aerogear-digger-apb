@@ -41,7 +41,7 @@
     jenkins_preexists: "{{ jenkins_service_preexists }}"
 
 - name: Install Jenkins plugins
-  shell: "bash /tmp/install-jenkins-plugins.sh {{ namespace }}"
+  shell: "bash /tmp/install-jenkins-plugins.sh {{ namespace }} {{ ag_jenkins.deployment.name }}"
   register: install_jenkins_plugins
 
 - name: Get Jenkins - Mobile CI|CD URI
