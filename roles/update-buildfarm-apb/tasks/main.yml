@@ -13,7 +13,6 @@
   tags:
   - install-sdk
 
-
 - name: "Checks if android sdk is already installed"
   stat:
     path: "{{ android_sdk_home }}/tools/bin/sdkmanager"

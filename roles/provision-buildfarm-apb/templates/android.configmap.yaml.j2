@@ -24,7 +24,7 @@ data:
           <name>jnlp</name>
           <image>{{ android_slave_image }}</image>
           <privileged>false</privileged>
-          <alwaysPullImage>true</alwaysPullImage>
+          <alwaysPullImage>{{android_slave_image_pull|bool|default(true)}}</alwaysPullImage>
           <workingDir>/tmp</workingDir>
           <command></command>
           <args>${computer.jnlpmac} ${computer.name}</args>

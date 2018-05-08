@@ -17,8 +17,14 @@
   changed_when: false
   register: jenkins_check
 
+- name: Copy the jenkins template
+  template:
+    src: jenkins-persistent.json.j2
+    dest: /tmp/jenkins-persistent.json
+    force: yes
+
 - name: Ensure Jenkins exists in namespace
-  command: "oc new-app --template=jenkins-persistent -e 'MEMORY_LIMIT={{ jenkins_master_memory_limit }}' -e 'VOLUME_CAPACITY={{ jenkins_master_volume_capacity }}' -n {{ namespace }}"
+  command: "oc new-app -f=/tmp/jenkins-persistent.json -e 'MEMORY_LIMIT={{ jenkins_master_memory_limit }}' -e 'VOLUME_CAPACITY={{ jenkins_master_volume_capacity }}' -n {{ namespace }}"
   when: jenkins_check.rc != 0
 
 - set_fact:
@@ -157,7 +163,7 @@
           src: default.cfg
           dest: /tmp/sdk.cfg
           mode: 0777
-      when: ANDROID_SDK_AUTO_CONFIG|bool|default(false) == True
+      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes'
 
     -
       name: Create custom config file
@@ -165,7 +171,7 @@
         content: "{{ ANDROID_SDK_CONFIG }}"
         dest: /tmp/sdk.cfg
         mode: 0777
-      when: ANDROID_SDK_AUTO_CONFIG|bool|default(false) == False and ANDROID_SDK_CONFIG is defined
+      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes' == False and ANDROID_SDK_CONFIG|default(' ') != ' '
 
     -
       name: Send config file to android sdk container
@@ -216,7 +222,7 @@
       - name: "Unarchive gradle files"
         command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
       when: gradlew_status.rc != 0
-  when: ANDROID_SDK_AUTO_CONFIG|bool|default(false) == True or ANDROID_SDK_CONFIG is defined
+  when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes' or ANDROID_SDK_CONFIG|default(' ') != ' '
 
 - include_tasks: update-secret.yml
   vars:
