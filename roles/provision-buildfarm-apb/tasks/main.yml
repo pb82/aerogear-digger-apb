@@ -171,7 +171,7 @@
         content: "{{ ANDROID_SDK_CONFIG }}"
         dest: /tmp/sdk.cfg
         mode: 0777
-      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes' == False and ANDROID_SDK_CONFIG|default(' ') != ' '
+      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'No' and ANDROID_SDK_CONFIG|default(' ') != ' '
 
     -
       name: Send config file to android sdk container
