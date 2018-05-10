@@ -1,0 +1,25 @@
+= Configuring an iOS App for CI/CD
+
+The CI/CD mobile service allows you automate building of iOS apps, allowing you to concentrate on developing the app.
+
+== Prerequisites
+
+* You have registered an iOS app on OpenShift, that is, you have provisioned an iOS mobile client.
+* You have provisioned the CI/CD mobile service.
+* You have built the iOS app using Xcode. 
+* You have configured a macOS computer as described in link:todo[Configuring macOS for CI/CD]
+
+== Procedure
+
+. Bind the iOS mobile client to the CI/CD mobile service.
+. Enter the parameters in the bind wizard.
+. By default, the <x> branch is used. If you want to specify the branch to build:
+.. how to
+.. use a different branch
+. To trigger a build ... 
+
+
+== Related Information
+
+* link:todo[About the CI/CD Mobile Service]
+* link:todo[Creating iOS Apps using Mobile Services]
