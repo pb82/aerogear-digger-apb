@@ -1,2 +1,2 @@
 * xref:index.adoc[Overview]
-** xref:proc_configuring-an-ios-app-for-ci-cd[iOS Config]
+** xref:proc_configuring-an-ios-app-for-ci-cd.adoc[iOS Config]
