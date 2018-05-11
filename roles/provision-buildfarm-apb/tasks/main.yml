@@ -10,11 +10,12 @@
 
 - name: Create Mobile CI|CD secret
   command: "oc create -f /tmp/aerogear-digger.secret.yaml -n {{ namespace }}"
+  changed_when: false
 
 - name: Check for current Jenkins
   command: "oc get service {{ ag_jenkins.service.name }} -n {{ namespace }}"
-  failed_when: false
   changed_when: false
+  failed_when: false
   register: jenkins_check
 
 - name: Copy the jenkins template
@@ -48,10 +49,12 @@
 
 - name: Install Jenkins plugins
   shell: "bash /tmp/install-jenkins-plugins.sh {{ namespace }} {{ ag_jenkins.deployment.name }}"
+  changed_when: false
   register: install_jenkins_plugins
 
 - name: Get Jenkins - Mobile CI|CD URI
   shell: "oc get routes {{ ag_jenkins.route.name }} -n {{ namespace}}  | grep -v NAME | awk '{ print $2 }'"
+  changed_when: false
   register: get_jenkins_uri
 
 - set_fact:
@@ -65,6 +68,7 @@
 
 - name: Create OpenShift Jenkins Kubernetes Plugin ConfigMap
   command: "oc create -f /tmp/android.configmap.yaml -n {{ namespace }}"
+  changed_when: false
 
 - name: "Read Android SDK definition"
   set_fact:
@@ -88,9 +92,12 @@
 - name: "Deploy the Android SDK image"
   command: "oc new-app -f {{ buildfarm_templates_dir }}/android-sdk-persistent-template.json -n {{ namespace }}"
   register: android_create_result
-  failed_when:
-    - android_create_result.stderr and android_create_result.stderr != '' and 'already exists' not in android_create_result.stderr
-  changed_when: android_create_result.rc == 0 or (android_create_result.rc == 1 and 'created' in android_create_result.stdout)
+  changed_when: >
+    android_create_result.rc == 0 or
+    (android_create_result.rc == 1 and 'created' in android_create_result.stdout)
+  failed_when: >
+    android_create_result.stderr and android_create_result.stderr != '' and
+    'already exists' not in android_create_result.stderr
   tags:
   - deploy-sdk-pod
 
@@ -123,13 +130,14 @@
   rescue:
   - name: "Attempting redeploy of failed Pod"
     command: "oc deploy --retry dc/{{ ag_android_sdk.deployment.name }} -n {{ namespace }}"
+    changed_when: false
   when: not poller.stat.exists
 
 - name: "Get the Android SDK pod name"
   shell: "oc get pods -n {{ namespace }} | grep {{ ag_android_sdk.deployment.name }} | grep -v deploy | awk '{print$1}'"
+  changed_when: false
   failed_when: output.stdout == ""
   register: output
-  changed_when: False
   tags:
   - install-sdk
 
@@ -139,89 +147,89 @@
   tags:
   - install-sdk
 
--
-  block:
-    - include: update-secret.yml
-      vars:
-        status_message: Configuring Android SDK container
-        status_percentage: "40"
-        jenkins_uri: "{{ jenkins_route }}"
-        jenkins_preexists: "{{ jenkins_service_preexists }}"
+- block:
+  - include: update-secret.yml
+    vars:
+      status_message: Configuring Android SDK container
+      status_percentage: "40"
+      jenkins_uri: "{{ jenkins_route }}"
+      jenkins_preexists: "{{ jenkins_service_preexists }}"
 
-    - name: "Checks if android sdk is already installed"
-      stat:
-        path: "{{ android_sdk_home }}/tools/bin/sdkmanager"
-      register: sdk_folder
+  - name: "Checks if android sdk is already installed"
+    stat:
+      path: "{{ android_sdk_home }}/tools/bin/sdkmanager"
+    register: sdk_folder
 
-    - name: "Install the Android SDK"
-      command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sdk install"
-      when: sdk_folder.stat.exists == False
+  - name: "Install the Android SDK"
+    command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sdk install"
+    when: sdk_folder.stat.exists == False
 
-    -
-      name: Copy default config file
-      copy:
-          src: default.cfg
-          dest: /tmp/sdk.cfg
-          mode: 0777
-      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes'
+  - name: Copy default config file
+    copy:
+      src: default.cfg
+      dest: /tmp/sdk.cfg
+      mode: 0777
+    when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes'
 
-    -
-      name: Create custom config file
-      copy:
-        content: "{{ ANDROID_SDK_CONFIG }}"
-        dest: /tmp/sdk.cfg
+  - name: Create custom config file
+    copy:
+      content: "{{ ANDROID_SDK_CONFIG }}"
+      dest: /tmp/sdk.cfg
+      mode: 0777
+    when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'No' and ANDROID_SDK_CONFIG|default(' ') != ' '
+
+  - name: Send config file to android sdk container
+    command: "oc cp /tmp/sdk.cfg {{ namespace }}/{{ android_sdk_podname }}:/opt/tools/sdk.cfg"
+    changed_when: false
+
+  - name: "Sync Android Platform Versions via config"
+    command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync /opt/tools/sdk.cfg"
+    changed_when: false
+    failed_when: "'Traceback' in rsh_cmd.stdout or 'Common Arguments' in rsh_cmd.stdout"
+    register: rsh_cmd
+
+  - name: "Installing Android SDK, this may take some time"
+    command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync -y /opt/tools/sdk.cfg"
+    when: "'Accept?' in rsh_cmd.stdout"
+
+  - include: update-secret.yml
+    vars:
+      status_message: Configuring Gradle
+      status_percentage: "80"
+      jenkins_uri: "{{ jenkins_route }}"
+      jenkins_preexists: "{{ jenkins_service_preexists }}"
+
+  - name: "Check gradle wrapper exists"
+    command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'stat {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradlew'"
+    register: gradlew_status
+    failed_when: False
+    changed_when: False
+
+  - block:
+    - name: "Create required directory"
+      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+      changed_when: false
+
+    - name: "Create temp folder"
+      file:
+        path: /tmp/aerogear-digger-installer
+        state: directory
         mode: 0777
-      when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'No' and ANDROID_SDK_CONFIG|default(' ') != ' '
 
-    -
-      name: Send config file to android sdk container
-      command: "oc cp /tmp/sdk.cfg {{ namespace }}/{{ android_sdk_podname }}:/opt/tools/sdk.cfg" 
+    - name: "Copy gradlew to remote temp folder"
+      copy:
+        src: gradle-wrapper.tar.gz
+        dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
+        mode: 0777
 
-    - name: "Sync Android Platform Versions via config"
-      command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync /opt/tools/sdk.cfg"
-      register: rsh_cmd
-      failed_when: "'Traceback' in rsh_cmd.stdout or 'Common Arguments' in rsh_cmd.stdout"
+    - name: "Copy required tarball"
+      command: "oc -n {{ namespace }} rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'"
+      changed_when: false
 
-    - name: "Installing Android SDK, this may take some time"
-      command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync -y /opt/tools/sdk.cfg"
-      when: "'Accept?' in rsh_cmd.stdout"
-
-    - include: update-secret.yml
-      vars:
-        status_message: Configuring Gradle
-        status_percentage: "80"
-        jenkins_uri: "{{ jenkins_route }}"
-        jenkins_preexists: "{{ jenkins_service_preexists }}"
-
-    - name: "Check gradle wrapper exists"
-      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'stat {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradlew'"
-      register: gradlew_status
-      failed_when: False
-      changed_when: False
-
-    -
-      block:
-      - name: "Create required directory"
-        command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
-
-      - name: "Create temp folder"
-        file:
-          path: /tmp/aerogear-digger-installer
-          state: directory
-          mode: 0777
-
-      - name: "Copy gradlew to remote temp folder"
-        copy:
-          src: gradle-wrapper.tar.gz
-          dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
-          mode: 0777
-
-      - name: "Copy required tarball"
-        command: "oc -n {{ namespace }} rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'"
-
-      - name: "Unarchive gradle files"
-        command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
-      when: gradlew_status.rc != 0
+    - name: "Unarchive gradle files"
+      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+      changed_when: false
+    when: gradlew_status.rc != 0
   when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes' or ANDROID_SDK_CONFIG|default(' ') != ' '
 
 - include_tasks: update-secret.yml

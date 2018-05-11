@@ -18,29 +18,46 @@
 
 - name: Delete AG-Digger Deployment Configs
   command: "oc delete dc/{{ item }} -n {{ namespace }}"
+  changed_when: false
   with_items:
   - '{{ ag_android_sdk.deployment.name }}'
   - '{{ ag_jenkins.deployment.name }}'
 
+- name: Delete AG-Jenkins Builds
+  command: "oc delete builds -n {{ namespace }} -l mobile-client-build=true"
+  changed_when: false
+
+- name: Delete AG-Jenkins Build Configs
+  command: "oc delete bc -n {{ namespace }} -l mobile-client-build=true"
+  changed_when: false
+
+- name: Delete AG-Jenkins Build Secrets
+  command: "oc delete secrets -n {{ namespace }} -l mobile-client-build=true"
+  changed_when: false
+
 - name: Delete AG-Digger Service Accounts
   command: "oc delete serviceaccounts/{{ item }} -n {{ namespace }}"
+  changed_when: false
   with_items:
   - '{{ ag_android_sdk.service.name }}'
   - '{{ ag_jenkins.service.name }}'
 
 - name: Delete AG-Digger Role Bindings
   command: "oc delete rolebindings/{{ item }} -n {{ namespace }}"
+  changed_when: false
   with_items:
   - '{{ ag_android_sdk.rolebinding.name }}'
   - '{{ ag_jenkins.rolebinding.name }}'
 
 - name: Delete AG-Digger secrets
   command: "oc delete secrets/{{ item }} -n {{ namespace }}"
+  changed_when: false
   with_items:
   - '{{ ag_digger_secret_name }}'
 
 - name: delete AG-Digger configmaps
   command: "oc delete configmaps/{{ item }} -n {{ namespace }}"
+  changed_when: false
   with_items:
   - '{{ ag_android_sdk.configmap.name }}'
   - '{{ ag_android_sdk.configmap.proxy }}'
