@@ -20,31 +20,30 @@
 
 - name: "Install the Android SDK"
   command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sdk install"
+  changed_when: False
   when: sdk_folder.stat.exists == False
 
--
-  name: Create custom config file
+- name: Create custom config file
   copy:
     content: "{{ ANDROID_SDK_CONFIG }}"
     dest: /tmp/sdk.cfg
     mode: 0777
 
--
-  name: Fix config file
+- name: Fix config file
   command: sed -i 's/\\n/\n/g' /tmp/sdk.cfg
+  changed_when: False
 
--
-  name: Send config file to android sdk container
+- name: Send config file to android sdk container
   command: "oc cp /tmp/sdk.cfg {{ namespace }}/{{ android_sdk_podname }}:/opt/tools/sdk.cfg"
+  changed_when: False
 
--
-  name: Check android license
+- name: Check android license
   command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} stat {{ android_sdk_home }}/licenses/android-sdk-license"
   register: android_license
   failed_when: False
+  changed_when: False
 
--
-  name: Running package installation for the first time
+- name: Running package installation for the first time
   block:
     - name: "Sync Android Platform Versions via config"
       command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl-sync /opt/tools/sdk.cfg"
@@ -66,27 +65,28 @@
   failed_when: False
   changed_when: False
 
--
-  block:
-    - name: "Create required directory"
-      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+- block:
+  - name: "Create required directory"
+    command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'mkdir -p {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+    changed_when: False
 
-    - name: "Create temp folder"
-      file:
-        path: /tmp/aerogear-digger-installer
-        state: directory
-        mode: 0777
+  - name: "Create temp folder"
+    file:
+      path: /tmp/aerogear-digger-installer
+      state: directory
+      mode: 0777
 
-    - name: "Copy gradlew to remote temp folder"
-      copy:
-        src: gradle-wrapper.tar.gz
-        dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
-        mode: 0777
+  - name: "Copy gradlew to remote temp folder"
+    copy:
+      src: gradle-wrapper.tar.gz
+      dest: /tmp/aerogear-digger-installer/gradle-wrapper.tar.gz
+      mode: 0777
 
-    - name: "Copy required tarball"
-      command: "oc -n {{ namespace }} rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'"
+  - name: "Copy required tarball"
+    command: "oc -n {{ namespace }} rsync /tmp/aerogear-digger-installer/ {{ android_sdk_podname }}:{{ android_sdk_home }}/tools/templates/gradle/wrapper/ --include='gradle-wrapper.tar.gz'"
+    changed_when: False
 
-    - name: "Unarchive gradle files"
-      command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
-      when: gradlew_status.rc != 0
+  - name: "Unarchive gradle files"
+    command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
+    when: gradlew_status.rc != 0
   when: gradlew_status.rc != 0
