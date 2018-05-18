@@ -164,19 +164,11 @@
     command: "oc -n {{ namespace }} rsh {{ android_sdk_podname }} androidctl sdk install"
     when: sdk_folder.stat.exists == False
 
-  - name: Copy default config file
-    copy:
-      src: default.cfg
-      dest: /tmp/sdk.cfg
-      mode: 0777
-    when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes'
-
   - name: Create custom config file
     copy:
       content: "{{ ANDROID_SDK_CONFIG }}"
       dest: /tmp/sdk.cfg
-      mode: 0777
-    when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'No' and ANDROID_SDK_CONFIG|default(' ') != ' '
+      mode: 0755
 
   - name: Send config file to android sdk container
     command: "oc cp /tmp/sdk.cfg {{ namespace }}/{{ android_sdk_podname }}:/opt/tools/sdk.cfg"
@@ -230,7 +222,7 @@
       command: "oc -n {{ namespace }} exec {{ android_sdk_podname }} -i -- bash -c 'tar -zxvf {{ android_sdk_home }}/tools/templates/gradle/wrapper/gradle-wrapper.tar.gz -C {{ android_sdk_home }}/tools/templates/gradle/wrapper'"
       changed_when: False
     when: gradlew_status.rc != 0
-  when: ANDROID_SDK_AUTO_CONFIG|default('No') == 'Yes' or ANDROID_SDK_CONFIG|default(' ') != ' '
+  when: ANDROID_SDK_CONFIG|default('')|length > 0
 
 - include_tasks: update-secret.yml
   vars:

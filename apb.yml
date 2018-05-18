@@ -27,20 +27,52 @@ plans:
       title: Android SDK License Agreement
       required: True
       display_group: Android SDK
-    - name: ANDROID_SDK_AUTO_CONFIG
-      default: 'Yes'
-      type: string
-      display_type: enum
-      enum: ["Yes", "No"]
-      description: "Installs the default android sdk packages"
-      title: Android SDK Auto Package Install
-      required: False
-      display_group: Android SDK
     - name: ANDROID_SDK_CONFIG
-      default: ' '
+      default: |
+        [base]
+        tools
+        platform-tools
+ 
+        [platforms]
+        android-26
+        android-25
+         
+        [build-tools]
+        26.0.2
+        26.0.1
+        26.0.0
+        25.0.3
+        25.0.2
+         
+        [extras:google]
+        google_play_services
+        m2repository
+         
+        [extras:android]
+        m2repository
+         
+        [extras:m2repository:com:android:support:constraint:constraint-layout]
+        1.0.0
+        1.0.1
+        1.0.2
+         
+        [extras:m2repository:com:android:support:constraint:constraint-layout-solver]
+        1.0.0
+        1.0.2
+         
+        [keystore]
+        alias=AndroidDebugKey
+        name=AG
+        unit=AeroGear
+        org=RedHat
+        loc=Waterford
+        state=WD
+        country=IRL
+        storepass=android
+        keypass=android
       type: string
       display_type: textarea
-      description: "Android SDK config file content"
+      description: "Android SDK config content"
       title: Android SDK package config
       required: False
       updatable: True
