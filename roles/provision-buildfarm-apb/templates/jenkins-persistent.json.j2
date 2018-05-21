@@ -90,7 +90,7 @@
                 "name": "jenkins",
                 "image": "${JENKINS_IMAGE_NAME}:${JENKINS_IMAGE_VERSION}",
                 "readinessProbe": {
-                  "timeoutSeconds": 3,
+                  "timeoutSeconds": 10,
                   "initialDelaySeconds": 3,
                   "httpGet": {
                     "path": "/login",
@@ -98,7 +98,7 @@
                   }
                 },
                 "livenessProbe": {
-                    "timeoutSeconds": 3,
+                    "timeoutSeconds": 10,
                     "initialDelaySeconds": 420,
                     "failureThreshold" : 30,
                     "httpGet": {
