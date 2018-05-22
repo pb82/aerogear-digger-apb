@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Built-By: lrossett
+Created-By: Apache Maven
+Build-Jdk: 1.8.0_171
+Extension-Name: xcode-plugin
+Specification-Title: This plugin adds the ability to call Xcode comman
+ d line tools to automate build and packaging iOS applications (iPhone
+ , iPad, ...).
+Implementation-Title: xcode-plugin
+Implementation-Version: 2.0.4
+Group-Id: org.jenkins-ci.plugins
+Short-Name: xcode-plugin
+Long-Name: Xcode integration
+Url: https://wiki.jenkins-ci.org/display/JENKINS/Xcode+Plugin
+Compatible-Since-Version: 2.0.0
+Plugin-Version: 2.0.4
+Hudson-Version: 1.642.3
+Jenkins-Version: 1.642.3
+Plugin-Dependencies: workflow-cps:2.0;resolution:=optional,credentials
+ :2.1.0,job-dsl:1.58;resolution:=optional,token-macro:2.0
+Plugin-Developers: Ray Yamamoto Hilton:rayhilton:ray.hilton@gmail.com,
+ Arnaud Heritier:aheritier:aheritier@apache.org,Jerome Lacoste:lacoste
+ j:jerome.lacoste@gmail.com
+
