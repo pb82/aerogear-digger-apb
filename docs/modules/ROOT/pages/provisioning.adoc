@@ -1,0 +1,10 @@
+= Provisioning the CI/CD Service
+
+// tag::provisioning-build[]
+
+* *Android SDK License Agreement
+ (required)*: Enter `yes` to accept the link:https://developer.android.com/studio/terms.html[Android SDK License Agreement].
+* Android SDK Auto Package Install (required)*: Choose whether to automatically install packages
+* *Android SDK package config*: Add any configuration details you require for the SDK config file.
+
+// end::provisioning-build[]
