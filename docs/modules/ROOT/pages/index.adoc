@@ -4,4 +4,6 @@ After following the link:/aerogear/latest/minishift_install.inc.html[instruction
 
 == About the CI/CD Service
 
+// tag::about-build[]
 The CI/CD service allows you build your Android and iOS apps, whether you are a native, Cordova or Xamarin developer.
+// end::about-build[]
