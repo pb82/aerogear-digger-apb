@@ -1,0 +1,61 @@
+- name: create artifact-proxy http route
+  openshift_v1_route:
+    name: 'artifact-proxy-route'
+    namespace: '{{ namespace }}'
+    labels:
+      app: artifact-proxy-operator
+      service: artifact-proxy-operator
+    to_name: artifact-proxy-operator
+    spec_port_target_port: web
+    tls_termination: edge
+
+- name: Get route host
+  shell: "oc get route artifact-proxy-route -n {{ namespace }} -o jsonpath={.spec.host}"
+  register: proxy_route_host
+
+- name: Get jenkins host
+  shell: "oc get route jenkins -n {{ namespace }} -o jsonpath={.spec.host}"
+  register: jenkins_route_host
+
+- name: create artifact-proxy service
+  k8s_v1_service:
+    name: 'artifact-proxy-operator'
+    namespace: '{{ namespace }}'
+    labels:
+      app: artifact-proxy
+      service: artifact-proxy
+    selector:
+      app: artifact-proxy
+      service: artifact-proxy
+    ports:
+    - name: web
+      port: 8080
+      target_port: 8080
+
+- name: create artifact-proxy k8s deployment
+  k8s_extensions_v1beta1_deployment:
+    name: artifact-proxy
+    namespace: '{{ namespace }}'
+    labels:
+      app: artifact-proxy
+      service: artifact-proxy
+      name: artifact-proxy
+      mobile: enabled
+    replicas: 1
+    spec_template_spec_service_account_name: "jenkins"
+    spec_template_metadata_labels:
+      app: artifact-proxy
+      service: artifact-proxy
+    containers:
+    - env:
+      - name: NAMESPACE
+        value: "{{ namespace }}"
+      - name: OPERATOR_HOSTNAME
+        value: "{{ proxy_route_host.stdout }}"
+      - name: JENKINS_HOSTNAME
+        value: "{{ jenkins_route_host.stdout }}"
+      image: 'docker.io/aerogear/artifact-proxy-operator:latest'
+      name: artifact-proxy
+      ports:
+      - container_port: 8080
+        protocol: TCP

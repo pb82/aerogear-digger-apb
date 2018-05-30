@@ -230,3 +230,5 @@
     status_percentage: "100"
     jenkins_uri: "{{ jenkins_route }}"
     jenkins_preexists: "{{ jenkins_service_preexists }}"
+
+- include_tasks: artifact-proxy-operator.yml

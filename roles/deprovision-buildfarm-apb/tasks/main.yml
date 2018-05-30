@@ -70,3 +70,5 @@
   with_items:
   - '{{ ag_android_sdk.pv_claim.name }}'
   - '{{ ag_jenkins.pv_claim.name }}'
+
+- include_tasks: artifact-proxy-operator.yml
