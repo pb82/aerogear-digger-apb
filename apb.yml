@@ -5,7 +5,6 @@ bindable: False
 async: optional
 tags:
   - mobile-service
-  - mobile-client-enabled
 metadata:
   displayName: Mobile CI|CD
   longDescription: "To use the Mobile CI|CD service you must first agree to the Android SDK License Agreement, which can be read at the following URL: https://developer.android.com/studio/terms.html.\n If the box is not checked the installer will take no action."
