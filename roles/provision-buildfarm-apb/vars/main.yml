@@ -16,6 +16,6 @@ deployments:
   - name: "{{ ag_android_sdk.deployment.name }}"
     containers:
     - name: "android-sdk"
-      image: "docker.io/aerogear/digger-android-sdk-image:latest"
+      image: "docker.io/aerogear/digger-android-sdk-image:1.0.0-alpha"
 # max number of concurrent Android builds that are allowed
 concurrent_android_builds: 5
