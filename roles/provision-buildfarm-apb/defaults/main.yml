@@ -1,6 +1,6 @@
 ---
 android_sdk_home: "{{ lookup('env', 'ANDROID_HOME')|default('/opt/android-sdk-linux', True) }}"
-android_slave_image: "docker.io/aerogear/digger-android-slave-image:latest"
+android_slave_image: "docker.io/aerogear/digger-android-slave-image:1.0.0-alpha"
 android_slave_image_pull: true
 android_slave_instance_cap: 3
 android_slave_idle_minutes: 3

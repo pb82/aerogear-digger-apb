@@ -1,6 +1,6 @@
-DOCKERHOST = docker.io
-DOCKERORG = aerogearcatalog
-IMAGENAME = aerogear-digger-apb
+DOCKERHOST ?= docker.io
+DOCKERORG ?= aerogearcatalog
+IMAGENAME ?= aerogear-digger-apb
 TAG = latest
 USER=$(shell id -u)
 PWD=$(shell pwd)

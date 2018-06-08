@@ -54,7 +54,7 @@
         value: "{{ proxy_route_host.stdout }}"
       - name: JENKINS_HOSTNAME
         value: "{{ jenkins_route_host.stdout }}"
-      image: 'docker.io/aerogear/artifact-proxy-operator:latest'
+      image: 'docker.io/aerogear/artifact-proxy-operator:1.0.0-alpha'
       name: artifact-proxy
       ports:
       - container_port: 8080
