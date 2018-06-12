@@ -1,17 +1,16 @@
-- name: delete artifact-proxy http route
+- name: Delete artifact-proxy http route
   openshift_v1_route:
     name: 'artifact-proxy-route'
     namespace: '{{ namespace }}'
     state: absent
 
-
-- name: delete artifact-proxy service
+- name: Delete artifact-proxy service
   k8s_v1_service:
     name: 'artifact-proxy-operator'
     namespace: '{{ namespace }}'
     state: absent
 
-- name: delete artifact-proxy k8s deployment
+- name: Delete artifact-proxy k8s deployment
   k8s_extensions_v1beta1_deployment:
     name: artifact-proxy
     namespace: '{{ namespace }}'
