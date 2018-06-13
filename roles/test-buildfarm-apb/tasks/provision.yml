@@ -1,0 +1,105 @@
+---
+- name: Test|Check that Mobile CI|CD route exist
+  shell: "oc get routes/{{ item }} -o name"
+  register: testpb_cicd_route
+  failed_when: item not in testpb_cicd_route.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_jenkins.route.name }}'
+  - 'artifact-proxy-route'
+
+- name: Test|Check that Mobile CI|CD SVCs exist
+  shell: "oc get services/{{ item }} -o name"
+  register: testpb_cicd_svc
+  failed_when: item not in testpb_cicd_svc.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_jenkins.service.name }}'
+  - '{{ ag_jenkins.service.jnlp }}'
+  - 'artifact-proxy-operator'
+
+- name: Test|Check that Mobile CI|CD Deploys exist
+  command: "oc get deploy/{{ item }} -o name"
+  register: testpb_cicd_deploy
+  failed_when: item not in testpb_cicd_deploy.stdout
+  changed_when: False
+  with_items:
+  - 'artifact-proxy'
+
+- name: Test|Check that Mobile CI|CD DCs exist
+  command: "oc get dc/{{ item }} -o name"
+  register: testpb_cicd_dc
+  failed_when: item not in testpb_cicd_dc.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.deployment.name }}'
+  - '{{ ag_jenkins.deployment.name }}'
+
+- name: Test|Check that Mobile CI|CD SAs exist
+  command: "oc get serviceaccount/{{ item }} -o name"
+  register: testpb_cicd_sa
+  failed_when: item not in testpb_cicd_sa.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.service.name }}'
+  - '{{ ag_jenkins.service.name }}'
+
+- name: Test|Check that Mobile CI|CD RBs exist
+  command: "oc get rolebinding/{{ item }} -o name"
+  register: testpb_cicd_rb
+  failed_when: item not in testpb_cicd_rb.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.rolebinding.name }}'
+  - '{{ ag_jenkins.rolebinding.name }}'
+
+- name: Test|Check that Mobile CI|CD Secrets exist
+  command: "oc get secrets/{{ item }} -o name"
+  register: testpb_cicd_sec
+  failed_when: item not in testpb_cicd_sec.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_digger_secret_name }}'
+
+- name: Test|Check that Mobile CI|CD CMs exist
+  command: "oc get configmaps/{{ item }} -o name"
+  register: testpb_cicd_config
+  failed_when: item not in testpb_cicd_config.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.configmap.name }}'
+  - '{{ ag_android_sdk.configmap.proxy }}'
+
+- name: Test|Check that Mobile CI|CD PVCs exist
+  command: "oc get pvc/{{ item }} -o name"
+  register: testpb_cicd_pvc
+  failed_when: item not in testpb_cicd_pvc.stdout
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.pv_claim.name }}'
+  - '{{ ag_jenkins.pv_claim.name }}'
+
+- name: Test|Get Jenkins URI from configmap
+  shell: 'oc get route/jenkins -o jsonpath={.spec.host}'
+  changed_when: False
+  register: testpb_cicd_jenkins_uri
+
+- name: Test|Check the Jenkins URI
+  uri:
+    url: "https://{{ testpb_cicd_jenkins_uri.stdout }}/login"
+    return_content: yes
+    validate_certs: no
+  register: testpb_cicd_jenkins_webpage
+  retries: 10
+  delay: 20
+  until: testpb_cicd_jenkins_webpage.status == 200
+
+- name: Test|Check that the keycloak login webpage is accessible
+  uri:
+    url: "https://{{ testpb_cicd_jenkins_uri.stdout }}/login"
+    return_content: yes
+    validate_certs: no
+  register: testpb_cicd_jenkins_webpage
+  retries: 10
+  delay: 20
+  until: '"<a href=\"https://jenkins.io/\">Jenkins ver. 2.107.3</a>" in testpb_cicd_jenkins_webpage.content'

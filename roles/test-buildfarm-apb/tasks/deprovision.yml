@@ -1,0 +1,116 @@
+---
+- name: Test|Check that Mobile CI|CD route exist
+  shell: "oc get routes/{{ item }} -o name 2>&1"
+  register: testpb_cicd_route
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_route.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_route.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_jenkins.route.name }}'
+  - 'artifact-proxy-route'
+
+- name: Test|Check that Mobile CI|CD SVCs exist
+  shell: "oc get services/{{ item }} -o name 2>&1"
+  register: testpb_cicd_svc
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_svc.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_svc.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_jenkins.service.name }}'
+  - '{{ ag_jenkins.service.jnlp }}'
+  - 'artifact-proxy-operator'
+
+- name: Test|Check that Mobile CI|CD Deploys exist
+  shell: "oc get deploy/{{ item }} -o name 2>&1"
+  register: testpb_cicd_deploy
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_deploy.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_deploy.stdout'
+  changed_when: False
+  with_items:
+  - 'artifact-proxy'
+
+- name: Test|Check that Mobile CI|CD DCs exist
+  shell: "oc get dc/{{ item }} -o name 2>&1"
+  register: testpb_cicd_dc
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_dc.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_dc.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.deployment.name }}'
+  - '{{ ag_jenkins.deployment.name }}'
+
+- name: Test|Check that Mobile CI|CD SAs exist
+  shell: "oc get serviceaccount/{{ item }} -o name 2>&1"
+  register: testpb_cicd_sa
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_sa.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_sa.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.service.name }}'
+  - '{{ ag_jenkins.service.name }}'
+
+- name: Test|Check that Mobile CI|CD RBs exist
+  shell: "oc get rolebinding/{{ item }} -o name 2>&1"
+  register: testpb_cicd_rb
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_rb.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_rb.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.rolebinding.name }}'
+  - '{{ ag_jenkins.rolebinding.name }}'
+
+- name: Test|Check that Mobile CI|CD Secrets exist
+  shell: "oc get secrets/{{ item }} -o name 2>&1"
+  register: testpb_cicd_sec
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_sec.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_sec.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_digger_secret_name }}'
+
+- name: Test|Check that Mobile CI|CD CMs exist
+  shell: "oc get configmaps/{{ item }} -o name 2>&1"
+  register: testpb_cicd_config
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_config.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_config.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.configmap.name }}'
+  - '{{ ag_android_sdk.configmap.proxy }}'
+
+- name: Test|Check that Mobile CI|CD PVCs exist
+  shell: "oc get pvc/{{ item }} -o name 2>&1"
+  register: testpb_cicd_pvc
+  retries: 50
+  delay: 10
+  until: '"not found" in testpb_cicd_pvc.stdout'
+  failed_when:
+    - '"not found" not in testpb_cicd_pvc.stdout'
+  changed_when: False
+  with_items:
+  - '{{ ag_android_sdk.pv_claim.name }}'
+  - '{{ ag_jenkins.pv_claim.name }}'
