@@ -5,6 +5,8 @@
     labels:
       app: artifact-proxy-operator
       service: artifact-proxy-operator
+      name: artifact-proxy
+      serviceInstanceID: '{{ _apb_service_instance_id }}'
     to_name: artifact-proxy-operator
     spec_port_target_port: web
     tls_termination: edge
@@ -24,6 +26,8 @@
     labels:
       app: artifact-proxy
       service: artifact-proxy
+      name: artifact-proxy
+      serviceInstanceID: '{{ _apb_service_instance_id }}'
     selector:
       app: artifact-proxy
       service: artifact-proxy
@@ -41,11 +45,13 @@
       service: artifact-proxy
       name: artifact-proxy
       mobile: enabled
+      serviceInstanceID: '{{ _apb_service_instance_id }}'
     replicas: 1
     spec_template_spec_service_account_name: "jenkins"
     spec_template_metadata_labels:
       app: artifact-proxy
       service: artifact-proxy
+      serviceInstanceID: '{{ _apb_service_instance_id }}'
     containers:
     - env:
       - name: NAMESPACE
@@ -54,7 +60,12 @@
         value: "{{ proxy_route_host.stdout }}"
       - name: JENKINS_HOSTNAME
         value: "{{ jenkins_route_host.stdout }}"
-      image: 'docker.io/aerogear/artifact-proxy-operator:1.0.0-alpha'
+      labels: 
+        app: artifact-proxy
+        service: artifact-proxy
+        name: artifact-proxy
+        serviceInstanceID: '{{ _apb_service_instance_id }}'
+      image: 'docker.io/aerogear/artifact-proxy-operator:latest'
       name: artifact-proxy
       ports:
       - container_port: 8080
