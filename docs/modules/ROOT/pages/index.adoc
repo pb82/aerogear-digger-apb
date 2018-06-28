@@ -1,9 +1,0 @@
-= Getting Started with the CI/CD Service
-
-After following the link:/aerogear/latest/minishift_install.inc.html[instructions for setting up Minishift] you can provision services, such as the {Keycloak} Service, from the OpenShift Catalog.
-
-== About the CI/CD Service
-
-// tag::about-build[]
-The CI/CD service allows you build your Android and iOS apps, whether you are a native, Cordova or Xamarin developer.
-// end::about-build[]
